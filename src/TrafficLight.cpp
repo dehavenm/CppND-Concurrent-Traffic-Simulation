@@ -31,7 +31,6 @@ void MessageQueue<T>::send(T &&msg)
 
     _queue.push_back(std::move(msg));
 
-    lck.unlock();
 
     _condition.notify_one();
 }
@@ -54,7 +53,7 @@ void TrafficLight::waitForGreen()
     {
         TrafficLightPhase phase = _messagequeue.receive();
 
-        if (phase == green)
+        if (phase == TrafficLightPhase::green)
         {
             return;
         }
@@ -98,13 +97,13 @@ void TrafficLight::cycleThroughPhases()
         {
             t1 = std::chrono::high_resolution_clock::now();
 
-            if (_currentPhase == red)
+            if (_currentPhase == TrafficLightPhase::red)
             {
-                _currentPhase = green;
+                _currentPhase = TrafficLightPhase::green;
             }
             else
             {
-                _currentPhase = red;
+                _currentPhase = TrafficLightPhase::red;
             }
 
             _messagequeue.send(std::move(_currentPhase));
