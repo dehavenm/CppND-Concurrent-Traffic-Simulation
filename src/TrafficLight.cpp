@@ -14,9 +14,13 @@ T MessageQueue<T>::receive()
     // The received object should then be returned by the receive function. 
     std::unique_lock<std::mutex> lck(_mutex);
 
-    _condition.wait();
+    _condition.wait(lck);
+
+    T message = _queue.back();
+
+    _queue.pop_back();
     
-    return std::move(_queue.pop_back());
+    return std::move(message);
 
      
 }
@@ -72,7 +76,8 @@ TrafficLightPhase TrafficLight::getCurrentPhase()
 void TrafficLight::simulate()
 {
     // FP.2b : Finally, the private method „cycleThroughPhases“ should be started in a thread when the public method „simulate“ is called. To do this, use the thread queue in the base class. 
-    threads.emplace_back(std::thread(cycleThroughPhases));
+    //threads.emplace_back(std::thread(cycleThroughPhases));
+    threads.emplace_back(std::thread(&TrafficLight::cycleThroughPhases,this));
 }
 
 // virtual function which is executed in a thread
@@ -82,8 +87,11 @@ void TrafficLight::cycleThroughPhases()
     // and toggles the current phase of the traffic light between red and green and sends an update method 
     // to the message queue using move semantics. The cycle duration should be a random value between 4 and 6 seconds. 
     // Also, the while-loop should use std::this_thread::sleep_for to wait 1ms between two cycles. 
-    srand (time(NULL));
-    int duration = rand() % 6000 + 4000;
+    std::default_random_engine generator(std::random_device{}());
+    std::uniform_int_distribution<int> distribution(4000,6000);
+    int duration = distribution(generator);
+
+
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
